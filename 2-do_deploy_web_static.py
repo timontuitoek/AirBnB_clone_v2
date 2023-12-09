@@ -1,54 +1,54 @@
 #!/usr/bin/python3
 """
-A Fabric script to deploy an archive to web servers.
-Usage: fab -f 2-do_deploy_web_static.py
-        do_deploy:archive_path=<path_to_archive>
+Fabric script that distributes an archive to your web servers
 """
-from fabric.api import env, run, put, local
-from os.path import exists, splitext
 
-# Define the remote user and hosts
-env.user = 'ubuntu'
-env.hosts = ['100.26.241.219', '100.26.122.241']
+from datetime import datetime
+from fabric.api import *
+import os
+
+env.hosts = ["100.26.241.219", "100.26.122.241"]
+env.user = "ubuntu"
 
 
 def do_deploy(archive_path):
     """
-    Distribute an archive to web servers.
-
-    Args:
-        archive_path (str): Path to the archive file.
-
-    Returns:
-        bool: True if all operations are done correctly, False otherwise.
+    Distribute archive.
     """
-    # Check if the archive exists locally
-    if not exists(archive_path):
-        return False
+    if os.path.exists(archive_path):
+        # Extracting necessary information from the archive_path
+        archived_file = archive_path.split("/")[-1]
+        filename_no_ext = os.path.splitext(archived_file)[0]
 
-    try:
-        # Upload the archive to the /tmp/ directory on the server
+        # Remote paths on the server
+        newest_version = "/data/web_static/releases/" + filename_no_ext
+        archived_file_remote = "/tmp/" + archived_file
+
+        # Upload the archive to the /tmp/ directory of the web server
         put(archive_path, "/tmp/")
 
-        # Extract the archive to the /data/web_static/releases/ directory
-        archive_filename = splitext(archive_path.split("/")[-1])[0]
-        release_path = "/data/web_static/releases/{}".format(archive_filename)
-        run("mkdir -p {}".format(release_path))
-        run("tar -xzf /tmp/{} -C {}".format(archive_filename + ".tgz",
-                                            release_path))
+        # Uncompress the archive to the folder
+        run("sudo mkdir -p {}".format(newest_version))
+        run("sudo tar -xzf {} -C {}/".format(archived_file_remote,
+                                             newest_version))
 
-        # Delete the uploaded archive from the server
-        run("rm /tmp/{}".format(archive_filename + ".tgz"))
+        # Delete the archive from the web server
+        run("sudo rm {}".format(archived_file_remote))
 
-        # Delete the symbolic link /data/web_static/current
-        run("rm -rf /data/web_static/current")
+        # Move content to the correct location
+        run("sudo mv {}/web_static/* {}".format(newest_version,
+                                                newest_version))
 
-        # Create a new symbolic link /data/web_static/current
-        run("ln -s {} /data/web_static/current".format(release_path))
+        # Remove unnecessary directory
+        run("sudo rm -rf {}/web_static".format(newest_version))
+
+        # Delete the symbolic link /data/web_static/current from the web server
+        run("sudo rm -rf /data/web_static/current")
+
+        # Create a new symbolic link /data/web_static/current on the web server
+        run("sudo ln -s {} /data/web_static/current".format(newest_version))
 
         print("New version deployed!")
         return True
 
-    except Exception as e:
-        print("Error: {}".format(str(e)))
-        return False
+    return False

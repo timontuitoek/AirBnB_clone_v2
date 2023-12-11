@@ -43,6 +43,7 @@ def do_pack():
         print("Error: {}".format(str(e)))
         return None
 
+
 @task
 def do_deploy(archive_path):
     """
@@ -85,6 +86,7 @@ def do_deploy(archive_path):
         return True
 
     return False
+
 
 @task
 def deploy():

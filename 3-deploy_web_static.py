@@ -20,7 +20,8 @@ def do_pack():
     """
     try:
         # Create the 'versions' folder if it doesn't exist
-        local("mkdir -p versions")
+        if local("mkdir -p versions").failed is True:
+            return None
 
         # Get the current date and time
         now = datetime.now()
@@ -31,7 +32,8 @@ def do_pack():
 
         # Create the .tgz archive
         print("Packing web_static to {}".format(archive_path))
-        local("tar -cvzf {} web_static".format(archive_path))
+        if local("tar -cvzf {} web_static".format(archive_path)).failed is True:
+            return None
 
         # Check if the archive was created successfully
         if os.path.exists(archive_path):
@@ -59,33 +61,39 @@ def do_deploy(archive_path):
         archived_file_remote = "/tmp/" + archived_file
 
         # Upload the archive to the /tmp/ directory of the web server
-        put(archive_path, "/tmp/")
+        if put(archive_path, "/tmp/").failed is True:
+            return False
 
         # Uncompress the archive to the folder
-        run("sudo mkdir -p {}".format(newest_version))
-        run("sudo tar -xzf {} -C {}/".format(archived_file_remote,
-                                             newest_version))
+        if run("sudo mkdir -p {}".format(newest_version)).failed is True:
+            return False
+        if run("sudo tar -xzf {} -C {}/".format(archived_file_remote, newest_version)).failed is True:
+            return False
 
         # Delete the archive from the web server
-        run("sudo rm {}".format(archived_file_remote))
+        if run("sudo rm {}".format(archived_file_remote)).failed is True:
+            return False
 
         # Move content to the correct location
-        run("sudo mv {}/web_static/* {}".format(newest_version,
-                                                newest_version))
+        if run("sudo mv {}/web_static/* {}".format(newest_version, newest_version)).failed is True:
+            return False
 
         # Remove unnecessary directory
-        run("sudo rm -rf {}/web_static".format(newest_version))
+        if run("sudo rm -rf {}/web_static".format(newest_version)).failed is True:
+            return False
 
         # Delete the symbolic link /data/web_static/current from the web server
-        run("sudo rm -rf /data/web_static/current")
+        if run("sudo rm -rf /data/web_static/current").failed is True:
+            return False
 
         # Create a new symbolic link /data/web_static/current on the web server
-        run("sudo ln -s {} /data/web_static/current".format(newest_version))
+        if run("sudo ln -s {} /data/web_static/current".format(newest_version)).failed is True:
+            return False
 
         print("New version deployed!")
         return True
 
-    # return False
+    return False
 
 
 @task

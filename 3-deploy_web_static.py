@@ -43,7 +43,7 @@ def do_pack():
         print("Error: {}".format(str(e)))
         return None
 
-
+@task
 def do_deploy(archive_path):
     """
     Distribute archive.
@@ -86,7 +86,7 @@ def do_deploy(archive_path):
 
     return False
 
-
+@task
 def deploy():
     """
     Deploy the web static to both web servers

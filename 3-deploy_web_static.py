@@ -111,35 +111,3 @@ def deploy():
 
     # Deploy the archive to the web servers
     return do_deploy(archive_path)
-
-
-def do_clean(number=0):
-    """
-    Delete out-of-date archives.
-    """
-    # Ensure that at least the most recent archive is kept
-    number = 1 if int(number) == 0 else int(number)
-
-    # Locally, in the "versions" directory
-    archives_local = sorted(os.listdir("versions"))
-
-    # Pop out unnecessary archives based on the specified number
-    [archives_local.pop() for i in range(number)]
-
-    # Remove unnecessary local archives
-    with lcd("versions"):
-        [local("rm ./{}".format(a)) for a in archives_local]
-
-    # On the remote servers, in the "/data/web_static/releases" directory
-    with cd("/data/web_static/releases"):
-        # Get a list of archives sorted by modification time
-        archives_remote = run("ls -tr").split()
-
-        # Filter out irrelevant archives (not starting with "web_static_")
-        archives_remote = [a for a in archives_remote if "web_static_" in a]
-
-        # Pop out unnecessary archives based on the specified number
-        [archives_remote.pop() for i in range(number)]
-
-        # Remove unnecessary remote archives
-        [run("rm -rf ./{}".format(a)) for a in archives_remote]

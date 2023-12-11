@@ -32,7 +32,8 @@ def do_pack():
 
         # Create the .tgz archive
         print("Packing web_static to {}".format(archive_path))
-        if local("tar -cvzf {} web_static".format(archive_path)).failed is True:
+        if local("tar -cvzf {} web_static".format(
+                archive_path)).failed is True:
             return None
 
         # Check if the archive was created successfully
@@ -67,7 +68,8 @@ def do_deploy(archive_path):
         # Uncompress the archive to the folder
         if run("sudo mkdir -p {}".format(newest_version)).failed is True:
             return False
-        if run("sudo tar -xzf {} -C {}/".format(archived_file_remote, newest_version)).failed is True:
+        if run("sudo tar -xzf {} -C {}/".format(
+                archived_file_remote, newest_version)).failed is True:
             return False
 
         # Delete the archive from the web server
@@ -75,11 +77,13 @@ def do_deploy(archive_path):
             return False
 
         # Move content to the correct location
-        if run("sudo mv {}/web_static/* {}".format(newest_version, newest_version)).failed is True:
+        if run("sudo mv {}/web_static/* {}".format(
+                newest_version, newest_version)).failed is True:
             return False
 
         # Remove unnecessary directory
-        if run("sudo rm -rf {}/web_static".format(newest_version)).failed is True:
+        if run("sudo rm -rf {}/web_static".format(
+                newest_version)).failed is True:
             return False
 
         # Delete the symbolic link /data/web_static/current from the web server
@@ -87,13 +91,12 @@ def do_deploy(archive_path):
             return False
 
         # Create a new symbolic link /data/web_static/current on the web server
-        if run("sudo ln -s {} /data/web_static/current".format(newest_version)).failed is True:
+        if run("sudo ln -s {} /data/web_static/current".format(
+                newest_version)).failed is True:
             return False
 
         print("New version deployed!")
         return True
-
-    return False
 
 
 @task

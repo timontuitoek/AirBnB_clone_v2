@@ -52,56 +52,51 @@ def do_deploy(archive_path):
     """
     Distribute archive.
     """
-    if os.path.exists(archive_path) is False:
-        return False
+    if os.path.exists(archive_path):
+        # Extracting necessary information from the archive_path
+        archived_file = archive_path.split("/")[-1]
+        filename_no_ext = os.path.splitext(archived_file)[0]
 
-    # Extract file name and remove extension
-    file = archive_path.split("/")[-1]
-    name = file.split(".")[0]
+        # Remote paths on the server
+        newest_version = "/data/web_static/releases/" + filename_no_ext
+        archived_file_remote = "/tmp/" + archived_file
 
-    # Upload the archive to the temporary directory on the server
-    if put(archive_path, "/tmp/{}".format(file)).failed is True:
-        return False
+        # Upload the archive to the /tmp/ directory of the web server
+        if put(archive_path, "/tmp/").failed is True:
+            return False
 
-    # Remove existing deployment directory
-    if run("rm -rf /data/web_static/releases/{}/".format(name)).failed is True:
-        return False
+        # Uncompress the archive to the folder
+        if run("sudo mkdir -p {}".format(newest_version)).failed is True:
+            return False
+        if run("sudo tar -xzf {} -C {}/".format(
+                archived_file_remote, newest_version)).failed is True:
+            return False
 
-    # Create necessary deployment directories
-    if run("mkdir -p /data/web_static/releases/{}/".
-           format(name)).failed is True:
-        return False
+        # Delete the archive from the web server
+        if run("sudo rm {}".format(archived_file_remote)).failed is True:
+            return False
 
-    # Extract the contents of the archive to the deployment directory
-    if run("tar -xzf /tmp/{} -C /data/web_static/releases/{}/".
-           format(file, name)).failed is True:
-        return False
+        # Move content to the correct location
+        if run("sudo mv {}/web_static/* {}".format(
+                newest_version, newest_version)).failed is True:
+            return False
 
-    # Remove the temporary archive file
-    if run("rm /tmp/{}".format(file)).failed is True:
-        return False
+        # Remove unnecessary directory
+        if run("sudo rm -rf {}/web_static".format(
+                newest_version)).failed is True:
+            return False
 
-    # Move contents to the proper deployment directory
-    if run("mv /data/web_static/releases/{}/web_static/* "
-           "/data/web_static/releases/{}/".format(name, name)).failed is True:
-        return False
+        # Delete the symbolic link /data/web_static/current from the web server
+        if run("sudo rm -rf /data/web_static/current").failed is True:
+            return False
 
-    # Remove unnecessary subdirectory from deployment directory
-    if run("rm -rf /data/web_static/releases/{}/web_static".
-           format(name)).failed is True:
-        return False
+        # Create a new symbolic link /data/web_static/current on the web server
+        if run("sudo ln -s {} /data/web_static/current".format(
+                newest_version)).failed is True:
+            return False
 
-    # Remove the old symbolic link to the current release
-    if run("rm -rf /data/web_static/current").failed is True:
-        return False
-
-    # Create a new symbolic link to the current release
-    if run("ln -s /data/web_static/releases/{}/ /data/web_static/current".
-           format(name)).failed is True:
-        return False
-
-    # Deployment successful
-    return True
+        print("New version deployed!")
+        return True
 
 
 @task

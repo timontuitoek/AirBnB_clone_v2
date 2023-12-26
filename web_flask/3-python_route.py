@@ -35,8 +35,9 @@ def c(text):
     return f"C {replaced}"
 
 
+@app.route("/python", strict_slashes=False)
 @app.route("/python/<text>", strict_slashes=False)
-def python(text):
+def python(text="is cool"):
     """ Displays 'Python' followed by the value of <text> """
     replaced = text.replace("_", " ")
     return f"Python {replaced}"

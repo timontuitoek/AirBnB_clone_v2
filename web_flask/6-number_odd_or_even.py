@@ -62,7 +62,7 @@ def number_template(n):
 
 @app.route("/number_odd_or_even/<int:n>", strict_slashes=False)
 def number_odd_or_even(n):
-    """ Display 'n is a number' only if n is an integer """
+    """ States whether <n> is even or odd in the body """
     if n % 2 == 0:
         val = "even"
     else:

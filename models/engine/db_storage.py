@@ -15,7 +15,6 @@ from sqlalchemy import (create_engine)
 from sqlalchemy.orm import sessionmaker, scoped_session
 import os
 from os import getenv
-import MySQLdb
 
 
 user = os.getenv('HBNB_MYSQL_USER')
